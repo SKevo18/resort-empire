@@ -23,6 +23,12 @@
 /[Uu]ser[Ss]ettings/
 *.log
 
+# macOS and Windows filesystem metadata
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
+
 # By default unity supports Blender asset imports, *.blend1 blender files do not need to be commited to version control.
 *.blend1
 *.blend1.meta
