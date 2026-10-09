@@ -22,6 +22,7 @@
 /[Ll]ogs/
 /[Uu]ser[Ss]ettings/
 *.log
+.vscode/
 
 # macOS and Windows filesystem metadata
 .DS_Store
