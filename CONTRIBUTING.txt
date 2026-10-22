@@ -23,7 +23,7 @@ gh pr create --base develop --fill
 merge:
 
 ```
-gh pr merge --merge --delete-branch
+gh pr merge --merge --delete-branch # alebo cez web
 git checkout develop
 git pull
 ```
