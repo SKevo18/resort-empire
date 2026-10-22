@@ -1,0 +1,29 @@
+use gitflow (https://git-flow.sh/) and gh cli (https://cli.github.com/)
+
+start feature:
+
+```
+git flow feature start <name>
+```
+
+commit:
+
+```
+git add .
+git commit -m "..."
+```
+
+PR:
+
+```
+git flow feature publish
+gh pr create --base develop --fill
+```
+
+merge:
+
+```
+gh pr merge --merge --delete-branch # alebo cez web
+git checkout develop
+git pull
+```
