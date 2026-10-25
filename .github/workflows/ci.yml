@@ -1,0 +1,144 @@
+# CI for Resort Empire (GameCI, https://game.ci).
+# Runs Unity tests and builds Android + Windows players on every PR to develop/main
+# and on every push to develop/main. Builds are uploaded as workflow artifacts.
+#
+# Required repository secrets (Settings > Secrets and variables > Actions):
+#   UNITY_LICENSE   contents of the Unity_lic.ulf file (Personal license)
+#   UNITY_EMAIL     Unity account email
+#   UNITY_PASSWORD  Unity account password
+# Pro/Plus license: set UNITY_SERIAL instead of UNITY_LICENSE.
+# Without these secrets the Unity jobs are skipped instead of failing.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [develop, main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  meta-files:
+    name: Check .meta files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Every asset has a .meta and every .meta has an asset
+        run: |
+          status=0
+          while IFS= read -r -d '' path; do
+            if [ ! -e "$path.meta" ]; then
+              echo "::error file=$path::Missing $path.meta (open the project in Unity and commit the generated .meta)"
+              status=1
+            fi
+          done < <(find Assets -mindepth 1 -not -name '*.meta' -not -name '.*' -not -path '*/.*' -print0)
+          while IFS= read -r -d '' meta; do
+            if [ ! -e "${meta%.meta}" ]; then
+              echo "::error file=$meta::Orphan $meta (its asset was deleted, delete the .meta too)"
+              status=1
+            fi
+          done < <(find Assets -name '*.meta' -print0)
+          exit $status
+
+  license:
+    name: Check Unity license
+    runs-on: ubuntu-latest
+    outputs:
+      available: ${{ steps.check.outputs.available }}
+    steps:
+      - id: check
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        run: |
+          if [ -n "$UNITY_LICENSE" ] || [ -n "$UNITY_SERIAL" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::Unity license secrets are not set, skipping Unity tests and builds."
+          fi
+
+  test:
+    name: Tests (edit + play mode)
+    needs: license
+    if: needs.license.outputs.available == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-test-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: Library-test-
+
+      - uses: game-ci/unity-test-runner@v4
+        id: tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          testMode: all
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Unity test results
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: ${{ steps.tests.outputs.artifactsPath }}
+
+  build:
+    name: Build ${{ matrix.targetPlatform }}
+    needs: [license, test]
+    if: needs.license.outputs.available == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        targetPlatform:
+          - Android
+          - StandaloneWindows64
+    steps:
+      # Android builds need more disk space than the runner has by default.
+      - if: matrix.targetPlatform == 'Android'
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0 # semantic versioning reads the git history
+
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ matrix.targetPlatform }}-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: Library-${{ matrix.targetPlatform }}-
+
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          targetPlatform: ${{ matrix.targetPlatform }}
+          buildName: ResortEmpire
+          versioning: Semantic
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ResortEmpire-${{ matrix.targetPlatform }}
+          path: build/${{ matrix.targetPlatform }}
+          retention-days: 14
