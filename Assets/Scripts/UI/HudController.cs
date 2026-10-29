@@ -1,4 +1,6 @@
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ResortEmpire.UI
 {
@@ -110,28 +112,28 @@ namespace ResortEmpire.UI
             var center = (size - 1) * 0.5f;
 
             for (var y = 0; y < size; y++)
-            for (var x = 0; x < size; x++)
-            {
-                var dx = x - center;
-                var dy = y - center;
-                var radius = Mathf.Sqrt(dx * dx + dy * dy);
-                Color32 color = new Color32(0, 0, 0, 0);
-                if (radius <= 29f)
+                for (var x = 0; x < size; x++)
                 {
-                    color = radius >= 25f
-                        ? new Color32(174, 104, 27, 255)
-                        : radius >= 22f
-                            ? new Color32(255, 218, 112, 255)
-                            : new Color32(242, 173, 51, 255);
+                    var dx = x - center;
+                    var dy = y - center;
+                    var radius = Mathf.Sqrt(dx * dx + dy * dy);
+                    Color32 color = new Color32(0, 0, 0, 0);
+                    if (radius <= 29f)
+                    {
+                        color = radius >= 25f
+                            ? new Color32(174, 104, 27, 255)
+                            : radius >= 22f
+                                ? new Color32(255, 218, 112, 255)
+                                : new Color32(242, 173, 51, 255);
 
-                    if (x < 25 && y > 35 && radius < 21f)
-                        color = new Color32(255, 226, 133, 255);
-                    if (Mathf.Abs(dx) < 2f && Mathf.Abs(dy) < 13f && radius < 19f)
-                        color = new Color32(194, 119, 31, 255);
+                        if (x < 25 && y > 35 && radius < 21f)
+                            color = new Color32(255, 226, 133, 255);
+                        if (Mathf.Abs(dx) < 2f && Mathf.Abs(dy) < 13f && radius < 19f)
+                            color = new Color32(194, 119, 31, 255);
+                    }
+
+                    pixels[y * size + x] = color;
                 }
-
-                pixels[y * size + x] = color;
-            }
 
             texture.SetPixels32(pixels);
             texture.Apply();
@@ -157,30 +159,30 @@ namespace ResortEmpire.UI
             };
 
             for (var y = 0; y < size; y++)
-            for (var x = 0; x < size; x++)
-            {
-                var point = new Vector2(x, y);
-                var color = new Color32(0, 0, 0, 0);
-                if (ContainsPoint(outer, point))
+                for (var x = 0; x < size; x++)
                 {
-                    color = new Color32(13, 83, 126, 255);
-                    if (ContainsPoint(inner, point))
+                    var point = new Vector2(x, y);
+                    var color = new Color32(0, 0, 0, 0);
+                    if (ContainsPoint(outer, point))
                     {
-                        if (y < 25f)
-                            color = x < 32f
-                                ? new Color32(138, 248, 255, 255)
-                                : new Color32(54, 192, 238, 255);
-                        else if (x < 27f)
-                            color = new Color32(64, 211, 244, 255);
-                        else if (x < 34f)
-                            color = new Color32(162, 250, 255, 255);
-                        else
-                            color = new Color32(34, 157, 216, 255);
+                        color = new Color32(13, 83, 126, 255);
+                        if (ContainsPoint(inner, point))
+                        {
+                            if (y < 25f)
+                                color = x < 32f
+                                    ? new Color32(138, 248, 255, 255)
+                                    : new Color32(54, 192, 238, 255);
+                            else if (x < 27f)
+                                color = new Color32(64, 211, 244, 255);
+                            else if (x < 34f)
+                                color = new Color32(162, 250, 255, 255);
+                            else
+                                color = new Color32(34, 157, 216, 255);
+                        }
                     }
-                }
 
-                pixels[y * size + x] = color;
-            }
+                    pixels[y * size + x] = color;
+                }
 
             texture.SetPixels32(pixels);
             texture.Apply();
