@@ -25,6 +25,15 @@ namespace ResortEmpire.NPC
         /// <summary>Name shown in the UI, e.g. "Food".</summary>
         public abstract string DisplayName { get; }
 
+        /// <summary>Weight of the need in the wave satisfaction formula; 1.0 for regular needs.</summary>
+        public virtual float Weight => 1f;
+
+        /// <summary>First wave (1-based) in which guests have this need.</summary>
+        public virtual int ActiveFromWave => 1;
+
+        /// <summary>True when guests of <paramref name="wave"/> have this need.</summary>
+        public bool IsActiveInWave(int wave) => wave >= ActiveFromWave;
+
         /// <summary>Current satisfaction, 0 = completely unmet, 1 = fully satisfied.</summary>
         public float Satisfaction => satisfaction;
 
