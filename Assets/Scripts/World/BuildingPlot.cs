@@ -37,6 +37,7 @@ namespace ResortEmpire.World
 
         [Header("Visuals")]
         [SerializeField] private SpriteRenderer ground;
+        [SerializeField] private SpriteRenderer signBoard;
         [SerializeField] private TMP_Text sign;
         [SerializeField] private Transform marker;
         [SerializeField] private Color lockedTint = new(0.55f, 0.55f, 0.55f, 1f);
@@ -128,16 +129,23 @@ namespace ResortEmpire.World
         private void ApplyVisuals()
         {
             bool unlocked = _state == PlotState.Unlocked;
+            Color tint = _state switch
+            {
+                PlotState.Locked => lockedTint,
+                PlotState.NotAffordable => notAffordableTint,
+                _ => Color.white
+            };
 
             if (ground != null)
             {
                 ground.gameObject.SetActive(!unlocked);
-                ground.color = _state switch
-                {
-                    PlotState.Locked => lockedTint,
-                    PlotState.NotAffordable => notAffordableTint,
-                    _ => Color.white
-                };
+                ground.color = tint;
+            }
+
+            if (signBoard != null)
+            {
+                signBoard.gameObject.SetActive(!unlocked);
+                signBoard.color = tint;
             }
 
             if (sign != null)
